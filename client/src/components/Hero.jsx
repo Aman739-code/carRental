@@ -18,7 +18,7 @@ const Hero = () => {
         <div className="flex flex-col md:flex-row items-start md:items-center gap-10 min-md:ml-8">
           <div className="flex flex-col items-start gap-2">
             <select
-              className="border border-borderColor"
+              className="bg-none"
               required
               value={pickupLocation}
               onChange={(e) => setPickupLocation(e.target.value)}
