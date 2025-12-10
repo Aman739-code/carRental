@@ -11,10 +11,10 @@ export const changeRoleToOwner = async (req, res) => {
     await User.findByIdAndUpdate(_id, {
       role: "owner",
     });
-    res.json({ success: true, message: "Now you can list cars" });
+    res.status(200).json({ success: true, message: "Now you can list cars" });
   } catch (error) {
     console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -47,10 +47,10 @@ export const addCar = async (req, res) => {
 
     await Car.create({ ...car, owner: _id, image });
 
-    res.json({ success: true, message: "Car added" });
+    res.status(201).json({ success: true, message: "Car added" });
   } catch (error) {
     console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -59,10 +59,10 @@ export const getOwnerCars = async (req, res) => {
   try {
     const { _id } = req.user;
     const cars = await Car.find({ owner: _id });
-    res.json({ success: true, cars });
+    res.status(200).json({ success: true, cars });
   } catch (error) {
     console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -75,17 +75,17 @@ export const toggleCarAvailability = async (req, res) => {
 
     // Checking if car belongs to the user
     if (car.owner.toString() !== _id.toString()) {
-      return res.json({ success: false, message: "Unauthorized" });
+      return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
     car.isAvailable = !car.isAvailable;
 
     await car.save();
 
-    res.json({ success: true, message: "Availability Toggled" });
+    res.status(200).json({ success: true, message: "Availability Toggled" });
   } catch (error) {
     console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -98,37 +98,48 @@ export const deleteCar = async (req, res) => {
 
     // Checking if car belongs to the user
     if (car.owner.toString() !== _id.toString()) {
-      return res.json({ success: false, message: "Unauthorized" });
+      return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
     car.owner = null;
     car.isAvailable = false;
 
-    await car.save()
+    await car.save();
 
-    res.json({success: true, message: "Car removed"})
+    res.status(200).json({ success: true, message: "Car removed" });
   } catch (error) {
     console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 // API to get Dashboard data
 export const getDashboardData = async (req, res) => {
   try {
-    const {_id, role} = req.user;
+    const { _id, role } = req.user;
 
-    if (role !== 'owner') {
-      res.json({success: false, message: "Unauthorize"})
+    if (role !== "owner") {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
-    const cars = await Car.find({owner: _id})
-    const bookings = await Booking.find({owner: _id}).populate('car').sort({createdAt: -1})
-    const pendingBookings = await Booking.find({owner: _id, status: 'pending'})
-    const completedBookings = await Booking.find({owner: _id, status: 'confirmed'})
+    const cars = await Car.find({ owner: _id });
+    const bookings = await Booking.find({ owner: _id })
+      .populate("car")
+      .sort({ createdAt: -1 });
+    const pendingBookings = await Booking.find({
+      owner: _id,
+      status: "pending",
+    });
+    const completedBookings = await Booking.find({
+      owner: _id,
+      status: "confirmed",
+    });
 
     // Calculate monthly revenue from bookings where status is confirmed
-    const monthlyRevenue = bookings.slice().filter(booking => booking.status === 'confirmed').reduce((acc, booking) => acc + booking.price, 0)
+    const monthlyRevenue = bookings
+      .slice()
+      .filter((booking) => booking.status === "confirmed")
+      .reduce((acc, booking) => acc + booking.price, 0);
 
     const dashboardData = {
       totalCars: cars.length,
@@ -136,20 +147,20 @@ export const getDashboardData = async (req, res) => {
       pendingBookings: pendingBookings.length,
       completedBookings: completedBookings.length,
       recentBookings: bookings.slice(0, 3),
-      monthlyRevenue
-    }
+      monthlyRevenue,
+    };
 
-    res.json({success: true, dashboardData})
+    res.status(200).json({ success: true, dashboardData });
   } catch (error) {
     console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// API to update user image 
+// API to update user image
 export const updateUserImage = async (req, res) => {
   try {
-    const {_id} = req.user;
+    const { _id } = req.user;
 
     const imageFile = req.file;
 
@@ -173,10 +184,10 @@ export const updateUserImage = async (req, res) => {
 
     const image = optimizedImageUrl;
 
-    await User.findByIdAndUpdate(_id, {image})
-    res.json({success: true, message: "Image updated"})
+    await User.findByIdAndUpdate(_id, { image });
+    res.status(200).json({ success: true, message: "Image updated" });
   } catch (error) {
     console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
-}
+};
